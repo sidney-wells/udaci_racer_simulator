@@ -1,7 +1,7 @@
 // PROVIDED CODE BELOW (LINES 1 - 80) DO NOT REMOVE
 
 // The store will hold all information needed globally
-var store = {
+let store = {
   track_id: undefined,
   player_id: undefined,
   race_id: undefined,
@@ -40,13 +40,11 @@ function setupClickHandlers() {
 
       // Race track form field
       if (target.matches('.card.track')) {
-        console.log('click on TRACK target', target);
         handleSelectTrack(target);
       }
 
       // Podracer form field
       if (target.matches('.card.podracer')) {
-        console.log('click on RACER target', target);
         handleSelectPodRacer(target);
       }
 
@@ -92,14 +90,11 @@ async function handleCreateRace() {
 
   // TODO - Get player_id and track_id from the store
   const { player_id, track_id } = store;
-  console.log('player_id', player_id);
-  console.log('track_id', track_id);
+
   if (!track_id || !player_id) {
     alert(`Please select track and racer to start the race!`);
     return;
   }
-
-  console.log('track_id', track_id);
 
   let raceNameChange = '';
   switch (track_id) {
@@ -169,10 +164,9 @@ function runRace(raceID) {
     const raceInterval = setInterval(() => {
       getRace(raceID).then((res) => {
         if (res.status === 'in-progress') {
-          console.log('res', res);
           renderAt('#leaderBoard', updateResults(res.positions));
         } else if (res.status === 'finished') {
-          console.log('Race is finished');
+          console.log('Race is finished before results view', res.positions);
           //stop the interval from repeating
           clearInterval(raceInterval);
           // render the results view
@@ -210,13 +204,11 @@ async function runCountdown() {
       }, 1000);
     });
   } catch (error) {
-    console.log(error);
+    console.log(`Error during runCountdown: ${error}`);
   }
 }
 
 function handleSelectPodRacer(target) {
-  console.log('handle select pod racer');
-
   console.log('selected a pod', target);
 
   // remove class selected from all racer options
@@ -233,8 +225,6 @@ function handleSelectPodRacer(target) {
 }
 
 function handleSelectTrack(target) {
-  console.log('handle select a track');
-
   console.log('selected a track', target);
 
   // remove class selected from all track options
@@ -264,7 +254,6 @@ function handleAccelerate() {
 // Provided code - do not remove
 
 function renderRacerCars(racers) {
-  console.log('render racer cars', racers);
   if (!racers.length) {
     return `
 			<h4>Loading Racers...</4>
@@ -281,8 +270,6 @@ function renderRacerCars(racers) {
 }
 
 function renderRacerCard(racer) {
-  console.log('handle racer card', racer);
-
   const { id, driver_name, top_speed, acceleration, handling } = racer;
 
   return `
@@ -296,8 +283,6 @@ function renderRacerCard(racer) {
 }
 
 function renderTrackCards(tracks) {
-  console.log('render track cards');
-
   if (!tracks.length) {
     return `
 			<h4>Loading Tracks...</4>
@@ -315,8 +300,6 @@ function renderTrackCards(tracks) {
 
 // step 6
 function renderTrackCard(track) {
-  console.log('render track card', track);
-
   const { id, name } = track;
 
   return `
@@ -358,9 +341,11 @@ function renderRaceStartView(track, racers) {
 }
 
 function resultsView(positions) {
-  console.log('results view');
+  console.log('results view - before positions sort', positions);
 
   positions.sort((a, b) => (a.final_position > b.final_position ? 1 : -1));
+
+  console.log('after positions sort', positions);
 
   return `
 		<header>
@@ -404,8 +389,11 @@ function raceProgress(positions) {
           case 4:
             final = '4th';
             break;
+          case 5:
+            final = '5th';
+            break;
           default:
-            final = 'LAST';
+            final = 'Waiting for results...';
             break;
         }
         completion = `${final} place`;
@@ -423,8 +411,9 @@ function raceProgress(positions) {
 }
 
 const updateResults = (results) => {
-  console.log('update results')
+  console.log('update results', results);
   const newResults = raceProgress(results);
+  console.log('newResults post race progress', newResults);
 
   return `
 		<main>
@@ -516,8 +505,6 @@ function getRacers() {
 
 function createRace(player_id, track_id) {
   console.log('create race');
-  console.log('player_id', player_id);
-  console.log('track_id', track_id);
 
   player_id = parseInt(player_id);
   track_id = parseInt(track_id);
@@ -549,8 +536,6 @@ function getRace(id) {
 }
 
 function startRace(id) {
-  console.log('start race', id);
-
   return fetch(`${SERVER}/api/races/${id}/start`, {
     method: 'POST',
     ...defaultFetchOpts(),
