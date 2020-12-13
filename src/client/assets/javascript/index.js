@@ -1,20 +1,28 @@
-// PROVIDED CODE BELOW (LINES 1 - 80) DO NOT REMOVE
-
 let store = {
   track_id: undefined,
   player_id: undefined,
   race_id: undefined,
 };
-let final_results = {
-  positions: [],
-  status: 'finished',
+
+const disneyFolks = {
+  'Racer 1': 'Elsa',
+  'Racer 2': 'Hercules',
+  'Racer 3': 'Mulan',
+  'Racer 4': 'Pocahontas',
+  'Racer 5': 'Simba',
 };
 
-// We need our javascript to wait until the DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
   onPageLoad();
   setupClickHandlers();
 });
+
+function renderErrorMessage(error) {
+  const footer = document.querySelector('footer');
+  footer.style.color = 'white';
+  footer.style.fontSize = '36px';
+  footer.innerHTML = error;
+}
 
 async function onPageLoad() {
   try {
@@ -28,8 +36,7 @@ async function onPageLoad() {
       renderAt('#racers', html);
     });
   } catch (error) {
-    console.log('Problem getting tracks and racers ::', error.message);
-    console.error(error);
+    renderErrorMessage('Problem getting tracks and racers ::', error.message);
   }
 }
 
@@ -39,25 +46,19 @@ function setupClickHandlers() {
     function (event) {
       const { target } = event;
 
-      // Race track form field
       if (target.matches('.card.track')) {
         handleSelectTrack(target);
       }
 
-      // Podracer form field
       if (target.matches('.card.podracer')) {
         handleSelectPodRacer(target);
       }
 
-      // Submit create race form
       if (target.matches('#submit-create-race')) {
         event.preventDefault();
-
-        // start race
         handleCreateRace();
       }
 
-      // Handle acceleration click
       if (target.matches('#gas-peddle')) {
         handleAccelerate(target);
       }
@@ -70,13 +71,10 @@ async function delay(ms) {
   try {
     return await new Promise((resolve) => setTimeout(resolve, ms));
   } catch (error) {
-    console.log("an error shouldn't be possible here");
-    console.log(error);
+    renderErrorMessage("an error shouldn't be possible here", error);
   }
 }
-// ^ PROVIDED CODE ^ DO NOT REMOVE
 
-// This async function controls the flow of the race, add the logic and error handling
 async function handleCreateRace() {
   const disneyTracks = [
     'Zootopia',
@@ -90,7 +88,7 @@ async function handleCreateRace() {
   const { player_id, track_id } = store;
 
   if (!track_id || !player_id) {
-    alert(`Please select track and racer to start the race!`);
+    renderErrorMessage(`Please select track and racer to start the race!`);
     return;
   }
 
@@ -121,23 +119,14 @@ async function handleCreateRace() {
 
     race.Track.name = raceNameChange;
 
-    // render starting UI
     renderAt('#race', renderRaceStartView(race.Track, race.Cars));
-
-    // TODO - update the store with the race id
     store.race_id = race.ID - 1;
 
-    // The race has been created, now start the countdown
-    // TODO - call the async function runCountdown
     await runCountdown();
-
-    // TODO - call the async function startRace
     await startRace(store.race_id);
-
-    // TODO - call the async function runRace
     await runRace(store.race_id);
   } catch (err) {
-    console.log(`Something went wrong while creating a race: ${err}`);
+    renderErrorMessage(`Something went wrong while creating a race: ${err}`);
   }
 }
 
@@ -148,72 +137,56 @@ function runRace(raceID) {
         if (res.status === 'in-progress') {
           renderAt('#leaderBoard', updateResults(res.positions));
         } else if (res.status === 'finished') {
-          //stop the interval from repeating
           clearInterval(raceInterval);
-          // render the results view
           renderAt('#race', resultsView(res.positions));
           resolve(res);
         }
       });
     }, 500);
   }).catch((err) =>
-    console.log(`Problem with runRace function: ${err.message}`)
+    renderErrorMessage(`Problem with runRace function: ${err.message}`)
   );
 }
 
 async function runCountdown() {
   try {
-    // wait for the DOM to load
     await delay(1000);
     let timer = 3;
 
     return new Promise((resolve) => {
-      // TODO - use Javascript's built in setInterval method to count down once per second
       setInterval(() => {
         if (timer > 0) {
-          // DOM manipulation to decrement the countdown for the user
           document.getElementById('big-numbers').innerHTML = --timer;
         } else {
-          // if the countdown is done, clear the interval, resolve the promise, and return
           clearInterval();
           resolve();
         }
       }, 1000);
     });
   } catch (error) {
-    console.log(`Error during runCountdown: ${error}`);
+    renderErrorMessage(`Error during runCountdown: ${error}`);
   }
 }
 
 function handleSelectPodRacer(target) {
-  console.log('selected a pod', target);
-
-  // remove class selected from all racer options
   const selected = document.querySelector('#racers .selected');
   if (selected) {
     selected.classList.remove('selected');
   }
 
-  // add class selected to current target
   target.classList.add('selected');
 
-  // TODO - save the selected racer to the store
   store.player_id = parseInt(target.id);
 }
 
 function handleSelectTrack(target) {
-  console.log('selected a track', target);
-
-  // remove class selected from all track options
   const selected = document.querySelector('#tracks .selected');
   if (selected) {
     selected.classList.remove('selected');
   }
 
-  // add class selected to current target
   target.classList.add('selected');
 
-  // TODO - save the selected track id to the store
   store.track_id = target.id;
 }
 
@@ -221,12 +194,9 @@ function handleAccelerate() {
   try {
     accelerate(store.race_id);
   } catch (error) {
-    console.log('Problem with handleAccelerate ::', error);
+    renderErrorMessage('Problem with handleAccelerate ::', error);
   }
 }
-
-// HTML VIEWS ------------------------------------------------
-// Provided code - do not remove
 
 function renderRacerCars(racers) {
   if (!racers.length) {
@@ -325,8 +295,6 @@ function resultsView(positions) {
 }
 
 function raceProgress(positions) {
-  console.log('race progress', positions);
-
   let racers = renameRacers(positions);
 
   let userPlayer = racers.find((racer) => racer.id === store.player_id);
@@ -394,10 +362,6 @@ function renderAt(element, html) {
   node.innerHTML = html;
 }
 
-// ^ Provided code ^ do not remove
-
-// API CALLS ------------------------------------------------
-
 const SERVER = 'http://localhost:8000';
 
 function defaultFetchOpts() {
@@ -426,7 +390,6 @@ function renameTracks(tracks) {
   });
 }
 
-// TODO - Make a fetch call (with error handling!) to each of the following API endpoints
 function getTracks() {
   return fetch(`${SERVER}/api/tracks`, {
     method: 'GET',
@@ -435,15 +398,13 @@ function getTracks() {
     .then((res) => res.json())
     .then((res) => renameTracks(res))
     .catch((err) =>
-      console.log(`Problem with getTracks request: ${err.message}`)
+      renderErrorMessage(`Problem with getTracks request: ${err.message}`)
     );
 }
 
 function renameRacers(racers) {
-  const disneyFolks = ['Elsa', 'Hercules', 'Mulan', 'Pocahontas', 'Simba'];
-
-  return racers.map((racer, i) => {
-    racer.driver_name = disneyFolks[i];
+  return racers.map((racer) => {
+    racer.driver_name = disneyFolks[racer.driver_name];
     return racer;
   });
 }
@@ -455,7 +416,9 @@ function getRacers() {
   })
     .then((res) => res.json())
     .then((res) => renameRacers(res))
-    .catch((err) => console.log(`Problem with getRacers request: ${err}`));
+    .catch((err) =>
+      renderErrorMessage(`Problem with getRacers request: ${err}`)
+    );
 }
 
 function createRace(player_id, track_id) {
@@ -470,7 +433,9 @@ function createRace(player_id, track_id) {
     body: JSON.stringify(body),
   })
     .then((res) => res.json())
-    .catch((err) => console.log('Problem with createRace request::', err));
+    .catch((err) =>
+      renderErrorMessage('Problem with createRace request::', err)
+    );
 }
 
 function getRace(id) {
@@ -480,7 +445,7 @@ function getRace(id) {
   })
     .then((res) => res.json())
     .catch((err) =>
-      console.log(
+      renderErrorMessage(
         `Trying to get #${id} race info. Problem with getRace request: ${err.message}`
       )
     );
@@ -490,7 +455,7 @@ function startRace(id) {
   return fetch(`${SERVER}/api/races/${id}/start`, {
     method: 'POST',
     ...defaultFetchOpts(),
-  }).catch((err) => console.log('Problem with getRace request::', err));
+  }).catch((err) => renderErrorMessage('Problem with getRace request::', err));
 }
 
 function accelerate(id) {
@@ -498,6 +463,6 @@ function accelerate(id) {
     method: 'POST',
     ...defaultFetchOpts(),
   }).catch((err) =>
-    console.log(`Problem with accelerate request: ${err.message}`)
+    renderErrorMessage(`Problem with accelerate request: ${err.message}`)
   );
 }
